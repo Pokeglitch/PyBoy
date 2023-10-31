@@ -3,7 +3,60 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
+try:
+    import cython
+    compiled = cython.compiled
+except ImportError:
+    compiled = False
+
 STATE_VERSION = 9
+
+
+class Logger:
+    def __init__(self, module):
+        self.module = module
+        self.log_level = 0
+
+    def set_log_level(self, level):
+        if level == "ERROR":
+            self.log_level = 4
+        elif level == "ERROR":
+            self.log_level = 4
+        elif level == "ERROR":
+            self.log_level = 4
+        elif level == "ERROR":
+            self.log_level = 4
+        else:
+            raise ValueError("Invalid log level")
+
+
+if not compiled:
+    exec(
+        """
+def error(self, x):
+    print(self.module + x)
+
+def warning(self, x):
+    print(self.module + x)
+
+def info(self, x):
+    print(self.module + x)
+
+def debug(self, x):
+    print(self.module + x)
+
+
+Logger.error = error
+Logger.warning = warning
+Logger.info = info
+Logger.debug = debug
+""", globals(), locals()
+    )
+
+
+def getLogger(module):
+    return Logger(module)
+
 
 ##############################################################
 # Buffer classes

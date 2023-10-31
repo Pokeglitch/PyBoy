@@ -4,8 +4,33 @@
 #
 
 cimport cython
-
 from libc.stdint cimport int64_t, uint8_t, uint16_t, uint32_t, uint64_t
+from libc.stdio cimport printf
+
+
+cdef class Logger:
+    cdef int log_level
+    cdef str module
+
+    cdef inline void error(self, str x) noexcept:
+        printf(self.module)
+        printf(x)
+
+    cdef inline void warning(self, str x) noexcept:
+        printf(self.module)
+        printf(x)
+
+    cdef inline void info(self, str x) noexcept:
+        printf(self.module)
+        printf(x)
+
+    cdef inline void debug(self, str x) noexcept:
+        printf(self.module)
+        printf(x)
+
+# cdef inline Logger getLogger(str module) noexcept:
+#     return Logger(module)
+
 
 ##############################################################
 # Buffer classes
