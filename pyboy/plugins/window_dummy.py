@@ -3,11 +3,10 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-import logging
-
+from pyboy import utils
 from pyboy.plugins.base_plugin import PyBoyWindowPlugin
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 
 class WindowDummy(PyBoyWindowPlugin):

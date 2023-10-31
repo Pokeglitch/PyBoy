@@ -15,8 +15,10 @@ cimport pyboy.core.lcd
 cimport pyboy.core.ram
 cimport pyboy.core.sound
 cimport pyboy.core.timer
-from pyboy.utils cimport IntIOInterface, WindowEvent
+from pyboy.utils cimport IntIOInterface, Logger, WindowEvent
 
+
+cdef Logger logger
 
 cdef uint16_t STAT, LY, LYC
 cdef short VBLANK, LCDC, TIMER, SERIAL, HIGHTOLOW

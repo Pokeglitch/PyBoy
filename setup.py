@@ -45,10 +45,12 @@ class build_ext(_build_ext):
         self.distribution.ext_modules = cythonize(
             [*cythonize_files],
             nthreads=thread_count,
-            annotate=False,
+            annotate=True,
             gdb_debug=False,
             language_level=3,
             compiler_directives={
+                # c_string_type="bytes",
+                # c_string_encoding="ascii",
                 "boundscheck": False,
                 "cdivision": True,
                 "cdivision_warnings": False,

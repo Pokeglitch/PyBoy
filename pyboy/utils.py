@@ -11,6 +11,24 @@ except ImportError:
 
 STATE_VERSION = 9
 
+# from pyboy import utils
+# import os
+
+# LOGLEVEL = os.environ.get("PYBOY_LOGLEVEL", "INFO")
+
+# handler = logging.StreamHandler()
+# handler.setFormatter(logging.Formatter("%(relativeCreated)-8d %(name)-30s %(levelname)-8s %(message)s"))
+
+# logger = utils.getLogger("pyboy")
+# logger.setLevel(LOGLEVEL)
+# logger.addHandler(handler)
+
+# def log_level(level):
+#     if level == "DISABLE":
+#         logging.disable(level=logging.CRITICAL)
+#     else:
+#         logger.setLevel(level)
+
 
 class Logger:
     def __init__(self, module):
@@ -29,24 +47,28 @@ class Logger:
         else:
             raise ValueError("Invalid log level")
 
+    def error3(self, *args):
+        pass
+
 
 if not compiled:
     exec(
         """
-def error(self, x):
+def error(self, x, *args):
     print(self.module + x)
 
-def warning(self, x):
+def warning(self, x, *args):
     print(self.module + x)
 
-def info(self, x):
+def info(self, x, *args):
     print(self.module + x)
 
-def debug(self, x):
+def debug(self, x, *args):
     print(self.module + x)
 
 
 Logger.error = error
+Logger.error2 = error
 Logger.warning = warning
 Logger.info = info
 Logger.debug = debug

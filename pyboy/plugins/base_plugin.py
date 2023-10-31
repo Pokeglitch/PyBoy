@@ -12,14 +12,15 @@ __pdoc__ = {
 }
 
 import io
-import logging
 import random
 from array import array
 
 import numpy as np
+
+from pyboy import utils
 from pyboy.botsupport.sprite import Sprite
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 try:
     from cython import compiled
@@ -69,10 +70,10 @@ class PyBoyWindowPlugin(PyBoyPlugin):
 
         scale = pyboy_argv.get("scale")
         self.scale = scale
-        logger.debug("%s initialization" % self.__class__.__name__)
+        # logger.debug("%s initialization", self.__class__.__name__)
 
         self._scaledresolution = (scale * COLS, scale * ROWS)
-        logger.debug("Scale: x%s %s" % (self.scale, self._scaledresolution))
+        # logger.debug("Scale: x%s %s", self.scale, self._scaledresolution)
 
         self.enable_title = True
         if not cythonmode:

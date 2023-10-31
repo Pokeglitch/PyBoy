@@ -3,11 +3,10 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-import logging
-
+from pyboy import utils
 from pyboy.plugins.base_plugin import PyBoyWindowPlugin
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 
 class WindowHeadless(PyBoyWindowPlugin):
@@ -25,4 +24,5 @@ class WindowHeadless(PyBoyWindowPlugin):
         return self.pyboy_argv.get("window_type") == "headless"
 
     def set_title(self, title):
-        logger.debug(title)
+        pass
+        # logger.debug(title)

@@ -4,7 +4,10 @@
 #
 
 from pyboy.plugins.base_plugin cimport PyBoyWindowPlugin
+from pyboy.utils cimport Logger
 
+
+cdef Logger logger
 
 cdef class WindowDummy(PyBoyWindowPlugin):
     pass

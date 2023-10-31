@@ -3,7 +3,6 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-import logging
 from array import array
 from copy import deepcopy
 from ctypes import c_void_p
@@ -11,7 +10,7 @@ from random import getrandbits
 
 from pyboy import utils
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 VIDEO_RAM = 8 * 1024 # 8KB
 OBJECT_ATTRIBUTE_MEMORY = 0xA0
@@ -995,7 +994,7 @@ class PaletteColorRegister:
     def getcolor(self, paletteindex, colorindex):
         #each palette = 8 bytes or 4 colors of 2 bytes
         assert paletteindex <= 7 or colorindex <= 3, logger.error(
-            f"Palette Mem Index Error, tried: Palette {paletteindex} color {colorindex}"
+            "Palette Mem Index Error, tried: Palette %d color %d", paletteindex, colorindex
         )
 
         return self.palette_mem_rgb[paletteindex*4 + colorindex]

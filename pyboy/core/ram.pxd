@@ -4,8 +4,11 @@
 #
 
 from libc.stdint cimport uint8_t
-from pyboy.utils cimport IntIOInterface
 
+from pyboy.utils cimport IntIOInterface, Logger
+
+
+cdef Logger logger
 
 cdef class RAM:
     cdef void save_state(self, IntIOInterface) noexcept

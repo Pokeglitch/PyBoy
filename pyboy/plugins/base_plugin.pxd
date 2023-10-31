@@ -3,13 +3,17 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
+cimport cython
 from cpython.array cimport array
 from libc.stdint cimport uint8_t, uint16_t, uint32_t
-cimport cython
+
 from pyboy.botsupport.tilemap cimport TileMap
-from pyboy.core.mb cimport Motherboard
 from pyboy.core.lcd cimport Renderer
-from pyboy.utils cimport WindowEvent
+from pyboy.core.mb cimport Motherboard
+from pyboy.utils cimport Logger, WindowEvent
+
+
+cdef Logger logger
 
 cdef int ROWS, COLS
 

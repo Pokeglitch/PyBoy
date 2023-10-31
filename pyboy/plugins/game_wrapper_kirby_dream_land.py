@@ -7,13 +7,12 @@ __pdoc__ = {
     "GameWrapperKirbyDreamLand.post_tick": False,
 }
 
-import logging
-
+from pyboy import utils
 from pyboy.utils import WindowEvent
 
 from .base_plugin import PyBoyGameWrapper
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 try:
     from cython import compiled
@@ -57,7 +56,7 @@ class GameWrapperKirbyDreamLand(PyBoyGameWrapper):
         self.score = 0
         score_digits = 5
         for n in range(score_digits):
-            self.score += self.pyboy.get_memory_value(0xD06F + n) * 10**(score_digits-n)
+            self.score += self.pyboy.get_memory_value(0xD06F + n) * 10**(score_digits - n)
 
         # Check if game is over
         prev_health = self.health

@@ -5,16 +5,17 @@
 
 cimport cython
 from cpython.array cimport array
-
-cimport pyboy.plugins.window_sdl2
-from pyboy.core.mb cimport Motherboard
-from pyboy.botsupport.sprite cimport Sprite
-from pyboy.botsupport.tilemap cimport TileMap
-from pyboy.plugins.base_plugin cimport PyBoyWindowPlugin
-from pyboy.utils cimport WindowEvent
-
 from libc.stdint cimport uint8_t, uint16_t, uint32_t, uint64_t
 
+cimport pyboy.plugins.window_sdl2
+from pyboy.botsupport.sprite cimport Sprite
+from pyboy.botsupport.tilemap cimport TileMap
+from pyboy.core.mb cimport Motherboard
+from pyboy.plugins.base_plugin cimport PyBoyWindowPlugin
+from pyboy.utils cimport Logger, WindowEvent
+
+
+cdef Logger logger
 
 cdef uint32_t COLOR
 cdef uint32_t MASK
@@ -83,6 +84,9 @@ cdef class TileViewWindow(BaseDebugWindow):
     # scanlineparameters=uint8_t[:,:],
     @cython.locals(x=int, y=int, xx=int, yy=int, row=int, column=int)
     cdef void draw_overlay(self) noexcept
+
+    @cython.locals(tile_x=int, tile_y=int, tile_identifier=int)
+    cdef list handle_events(self, list) noexcept
 
 
 cdef class TileDataWindow(BaseDebugWindow):

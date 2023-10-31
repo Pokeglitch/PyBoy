@@ -7,10 +7,12 @@
 import argparse
 import os
 
-from pyboy import PyBoy, core
-from pyboy.logger import log_level, logger
+from pyboy import PyBoy, core, utils
+# from pyboy.logger import log_level, logger
 from pyboy.plugins.manager import parser_arguments
 from pyboy.pyboy import defaults
+
+logger = utils.getLogger(__name__)
 
 INTERNAL_LOADSTATE = "INTERNAL_LOADSTATE_TOKEN"
 
@@ -29,7 +31,7 @@ def cgb_color_tuple(string):
 
 def valid_file_path(path):
     if not path == INTERNAL_LOADSTATE and not os.path.isfile(path):
-        logger.error(f"Filepath '{path}' couldn't be found, or isn't a file!")
+        # logger.error(f"Filepath '{path}' couldn't be found, or isn't a file!")
         exit(1)
     return path
 
@@ -104,45 +106,45 @@ for arguments in parser_arguments():
 
 def main():
     argv = parser.parse_args()
-    log_level(argv.log_level)
+    # log_level(argv.log_level)
 
-    logger.info(
-        """
-The Game Boy controls are as follows:
+    #     logger.info(
+    #         """
+    # The Game Boy controls are as follows:
 
-| Keyboard key | GameBoy equivalant |
-| ---          | ---                |
-| Up           | Up                 |
-| Down         | Down               |
-| Left         | Left               |
-| Right        | Right              |
-| A            | A                  |
-| S            | B                  |
-| Return       | Start              |
-| Backspace    | Select             |
+    # | Keyboard key | GameBoy equivalant |
+    # | ---          | ---                |
+    # | Up           | Up                 |
+    # | Down         | Down               |
+    # | Left         | Left               |
+    # | Right        | Right              |
+    # | A            | A                  |
+    # | S            | B                  |
+    # | Return       | Start              |
+    # | Backspace    | Select             |
 
-The other controls for the emulator:
+    # The other controls for the emulator:
 
-| Keyboard key | Emulator function       |
-| ---          | ---                     |
-| F11          | Toggle fullscreen       |
-| Escape       | Quit                    |
-| D            | Debug                   |
-| Space        | Unlimited FPS           |
-| Z            | Save state              |
-| X            | Load state              |
-| I            | Toggle screen recording |
-| O            | Save screenshot         |
-| ,            | Rewind backwards        |
-| .            | Rewind forward          |
-| J            | Memory Window + 0x100   |
-| K            | Memory Window - 0x100   |
-| Shift + J    | Memory Window + 0x1000  |
-| Shift + K    | Memory Window - 0x1000  |
+    # | Keyboard key | Emulator function       |
+    # | ---          | ---                     |
+    # | F11          | Toggle fullscreen       |
+    # | Escape       | Quit                    |
+    # | D            | Debug                   |
+    # | Space        | Unlimited FPS           |
+    # | Z            | Save state              |
+    # | X            | Load state              |
+    # | I            | Toggle screen recording |
+    # | O            | Save screenshot         |
+    # | ,            | Rewind backwards        |
+    # | .            | Rewind forward          |
+    # | J            | Memory Window + 0x100   |
+    # | K            | Memory Window - 0x100   |
+    # | Shift + J    | Memory Window + 0x1000  |
+    # | Shift + K    | Memory Window - 0x1000  |
 
-See "pyboy --help" for how to enable rewind and other awesome features!
-"""
-    )
+    # See "pyboy --help" for how to enable rewind and other awesome features!
+    # """
+    #     )
 
     # Start PyBoy and run loop
     pyboy = PyBoy(argv.ROM, **vars(argv))

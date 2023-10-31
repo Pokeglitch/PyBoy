@@ -17,10 +17,10 @@ warning = """
 """
 
 imports = """
-import logging
+from pyboy import utils
 import array
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 FLAGC, FLAGH, FLAGN, FLAGZ = range(4, 8)
 
@@ -43,7 +43,7 @@ cdef uint8_t no_opcode(cpu.CPU) noexcept
 
 
 def inline_signed_int8(arg):
-    return "(({} ^ 0x80) - 0x80)".format(arg)
+    return f"(({arg} ^ 0x80) - 0x80)".format()
 
 
 opcodes = []

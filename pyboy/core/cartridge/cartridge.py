@@ -3,8 +3,9 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-import logging
 from array import array
+
+from pyboy import utils
 
 from .base_mbc import ROMOnly
 from .mbc1 import MBC1
@@ -12,7 +13,7 @@ from .mbc2 import MBC2
 from .mbc3 import MBC3
 from .mbc5 import MBC5
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 try:
     from cython import compiled
@@ -34,11 +35,9 @@ def load_cartridge(filename):
     if cartinfo is None:
         raise Exception("Catridge type invalid: %s" % carttype)
 
-    cartdata = (
-        carttype, cartinfo[0].__name__, ", ".join([x for x, y in zip(["SRAM", "Battery", "RTC"], cartinfo[1:]) if y])
-    )
-    logger.debug("Cartridge type: 0x%0.2x - %s, %s" % cartdata)
-    logger.debug("Cartridge size: %d ROM banks of 16KB, %s RAM banks of 8KB" % (len(rombanks), external_ram_count))
+    cart_line = ", ".join([x for x, y in zip(["SRAM", "Battery", "RTC"], cartinfo[1:]) if y])
+    # logger.debug("Cartridge type: 0x%0.2x - %s, %s", carttype, cartinfo[0].__name__, cart_line)
+    # logger.debug("Cartridge size: %d ROM banks of 16KB, %s RAM banks of 8KB" % (len(rombanks), external_ram_count))
     cartmeta = CARTRIDGE_TABLE[carttype]
 
     return cartmeta[0](filename, rombanks, external_ram_count, carttype, *cartmeta[1:])

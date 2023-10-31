@@ -2,34 +2,68 @@
 # License: See LICENSE.md file
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
+# cython: c_string_type=bytes, c_string_encoding=ascii
 
 cimport cython
 from libc.stdint cimport int64_t, uint8_t, uint16_t, uint32_t, uint64_t
-from libc.stdio cimport printf
+from libc.stdio cimport fprintf, printf, stderr
 
+
+cdef extern from "stdarg.h":
+    ctypedef struct va_list:
+        pass
+
+
+cdef extern from *:
+    """
+    #define _log() ({ va_list va; va_start(va, __pyx_v_fmt); vfprintf(stderr, __pyx_v_fmt, va); va_end(va);})
+    """
+    # void _log(const char* fmt)
+    void _log()
 
 cdef class Logger:
+    """
+    iusdjfiosdf
+    """
     cdef int log_level
     cdef str module
 
-    cdef inline void error(self, str x) noexcept:
-        printf(self.module)
-        printf(x)
+    # cdef void error3(self, *args) noexcept
 
-    cdef inline void warning(self, str x) noexcept:
-        printf(self.module)
-        printf(x)
+    cdef inline void error2(self, char[] fmt, ...) noexcept:
+        # cdef char[128] _fmt = fmt.decode()
+        # _log(_fmt)
+        _log()
 
-    cdef inline void info(self, str x) noexcept:
-        printf(self.module)
-        printf(x)
+    cdef inline void error(self, char[] fmt, ...) noexcept:
+        # cdef char[128] _fmt = fmt.decode()
+        # _log(_fmt)
+        _log()
 
-    cdef inline void debug(self, str x) noexcept:
-        printf(self.module)
-        printf(x)
+    cdef inline void warning(self, char[] fmt, ...) noexcept:
+        _log()
+        # printf(self.module)
+        # printf(x)
 
-# cdef inline Logger getLogger(str module) noexcept:
-#     return Logger(module)
+# IF DEBUG
+#     cdef inline void info(self, char[] fmt, ...) noexcept:
+#         _log()
+#         # printf(self.module)
+#         # printf(x)
+
+#     cdef inline void debug(self, char[] fmt, ...) noexcept:
+#         _log()
+#         # printf(self.module)
+#         # printf(x)
+# ELSE
+    cdef inline void info(self, str fmt, ...) noexcept:
+        pass
+
+    cdef inline void debug(self, str fmt, ...) noexcept:
+        pass
+# ENDIF
+
+cdef Logger logger
 
 
 ##############################################################

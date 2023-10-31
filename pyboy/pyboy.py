@@ -6,10 +6,10 @@
 The core module of the emulator
 """
 
-import logging
 import os
 import time
 
+from pyboy import utils
 from pyboy.openai_gym import PyBoyGymEnv
 from pyboy.openai_gym import enabled as gym_enabled
 from pyboy.plugins.manager import PluginManager
@@ -18,7 +18,7 @@ from pyboy.utils import IntIOWrapper, WindowEvent
 from . import botsupport
 from .core.mb import Motherboard
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 SPF = 1 / 60. # inverse FPS (frame-per-second)
 
@@ -161,14 +161,14 @@ class PyBoy:
             elif event == WindowEvent.RELEASE_SPEED_UP:
                 # Switch between unlimited and 1x real-time emulation speed
                 self.target_emulationspeed = int(bool(self.target_emulationspeed) ^ True)
-                logger.debug("Speed limit: %s" % self.target_emulationspeed)
+                logger.debug("Speed limit: %d", self.target_emulationspeed)
             elif event == WindowEvent.STATE_SAVE:
                 with open(self.gamerom_file + ".state", "wb") as f:
                     self.mb.save_state(IntIOWrapper(f))
             elif event == WindowEvent.STATE_LOAD:
                 state_path = self.gamerom_file + ".state"
                 if not os.path.isfile(state_path):
-                    logger.error(f"State file not found: {state_path}")
+                    # logger.error("State file not found: %s", state_path)
                     continue
                 with open(state_path, "rb") as f:
                     self.mb.load_state(IntIOWrapper(f))
@@ -217,8 +217,8 @@ class PyBoy:
 
     def _update_window_title(self):
         avg_emu = self.avg_pre + self.avg_tick + self.avg_post
-        self.window_title = "CPU/frame: %0.2f%%" % ((self.avg_pre + self.avg_tick) / SPF * 100)
-        self.window_title += " Emulation: x%s" % (round(SPF / avg_emu) if avg_emu > 0 else "INF")
+        self.window_title = f"CPU/frame: {(self.avg_pre + self.avg_tick) / SPF * 100:0.2f}%"
+        self.window_title += f' Emulation: x{(round(SPF / avg_emu) if avg_emu > 0 else "INF")}'
         if self.paused:
             self.window_title += "[PAUSED]"
         self.window_title += self.plugin_manager.window_title()
@@ -291,7 +291,7 @@ class PyBoy:
         if gym_enabled:
             return PyBoyGymEnv(self, observation_type, action_type, simultaneous_actions, **kwargs)
         else:
-            logger.error(f"{__name__}: Missing dependency \"gym\". ")
+            # logger.error("%s: Missing dependency \"gym\". ", __name__)
             return None
 
     def game_wrapper(self):

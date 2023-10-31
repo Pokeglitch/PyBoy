@@ -7,14 +7,14 @@ __pdoc__ = {
     "GameWrapperSuperMarioLand.post_tick": False,
 }
 
-import logging
-
 import numpy as np
+
+from pyboy import utils
 from pyboy.utils import WindowEvent
 
 from .base_plugin import PyBoyGameWrapper
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 try:
     from cython import compiled
@@ -182,7 +182,7 @@ class GameWrapperSuperMarioLand(PyBoyGameWrapper):
             self.pyboy.set_memory_value(ADDR_LIVES_LEFT_DISPLAY, tens)
             self.pyboy.set_memory_value(ADDR_LIVES_LEFT_DISPLAY + 1, ones)
         else:
-            logger.error(f"{amount} is out of bounds. Only values between 0 and 99 allowed.")
+            logger.error("%d is out of bounds. Only values between 0 and 99 allowed.", amount)
 
     def set_world_level(self, world, level):
         """

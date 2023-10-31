@@ -3,8 +3,7 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-import logging
-
+from pyboy import utils
 from pyboy.core.opcodes import CPU_COMMANDS
 from pyboy.utils import STATE_VERSION
 
@@ -12,7 +11,7 @@ from . import bootrom, cartridge, cpu, interaction, lcd, ram, sound, timer
 
 INTR_VBLANK, INTR_LCDC, INTR_TIMER, INTR_SERIAL, INTR_HIGHTOLOW = [1 << x for x in range(5)]
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 
 class Motherboard:
@@ -34,7 +33,10 @@ class Motherboard:
         self.cartridge = cartridge.load_cartridge(gamerom_file)
         if cgb is None:
             cgb = self.cartridge.cgb
-            logger.debug(f'Cartridge type auto-detected to {"CGB" if cgb else "DMG"}')
+            if cgb:
+                logger.debug(f"Cartridge type auto-detected to CGB")
+            else:
+                logger.debug(f"Cartridge type auto-detected to DMG")
 
         self.timer = timer.Timer()
         self.interaction = interaction.Interaction()
@@ -136,11 +138,11 @@ class Motherboard:
         logger.debug("Loading state...")
         state_version = f.read()
         if state_version >= 2:
-            logger.debug(f"State version: {state_version}")
+            logger.debug("State version: %d", state_version)
             # From version 2 and above, this is the version number
             self.bootrom_enabled = f.read()
         else:
-            logger.debug(f"State version: 0-1")
+            logger.debug("State version: 0-1")
             # HACK: The byte wasn't a state version, but the bootrom flag
             self.bootrom_enabled = state_version
         if state_version >= 8:

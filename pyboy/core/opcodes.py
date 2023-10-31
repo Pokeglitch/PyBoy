@@ -3,10 +3,10 @@
 # DO NOT MODIFY THIS FILE.
 # CHANGES TO THE CODE SHOULD BE MADE IN 'opcodes_gen.py'.
 
-import logging
+from pyboy import utils
 import array
 
-logger = logging.getLogger(__name__)
+logger = utils.getLogger(__name__)
 
 FLAGC, FLAGH, FLAGN, FLAGZ = range(4, 8)
 
