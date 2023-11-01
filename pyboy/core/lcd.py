@@ -387,6 +387,9 @@ class Renderer:
         self._spritecache1_raw = array("B", [0x00] * (TILES*8*8*4))
         self.sprites_to_render = array("i", [0] * 10)
 
+        self._tilecache0_state = array("B", [0] * TILES)
+        self._spritecache0_state = array("B", [0] * TILES)
+        self._spritecache1_state = array("B", [0] * TILES)
         self.clear_cache()
 
         if cythonmode:
@@ -677,16 +680,16 @@ class Renderer:
             self._spritecache1_state[tile] = 0
 
     def clear_tilecache0(self):
-        self._tilecache0_state = array("B", [0] * TILES)
+        self._tilecache0_state[:] = 0
 
     def clear_tilecache1(self):
         pass
 
     def clear_spritecache0(self):
-        self._spritecache0_state = array("B", [0] * TILES)
+        self._spritecache0_state[:] = 0
 
     def clear_spritecache1(self):
-        self._spritecache1_state = array("B", [0] * TILES)
+        self._spritecache1_state[:] = 0
 
     def update_tilecache0(self, lcd, t, bank):
         if self._tilecache0_state[t]:
@@ -809,6 +812,7 @@ class CGBRenderer(Renderer):
             v = memoryview(self._tilecache1_raw).cast("I")
             self._tilecache1 = [v[i:i + 8] for i in range(0, TILES * 8 * 8, 8)]
 
+        self._tilecache1_state = array("B", [0] * TILES)
         self.clear_cache()
 
     def clear_cache(self):
@@ -818,7 +822,7 @@ class CGBRenderer(Renderer):
         self.clear_spritecache1()
 
     def clear_tilecache1(self):
-        self._tilecache1_state = array("B", [0] * TILES)
+        self._tilecache1_state[:] = 0
 
     def update_tilecache0(self, lcd, t, bank):
         if self._tilecache0_state[t]:

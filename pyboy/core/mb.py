@@ -244,9 +244,10 @@ class Motherboard:
 
             # Escape halt. This happens when pressing 'return' in the debugger. It will make us skip breaking on halt
             # for every cycle, but do break on the next instruction -- even in an interrupt.
-            escape_halt = self.cpu.halted and self.breakpoint_latch == 1
-            if self.breakpoints_enabled and (not escape_halt) and self.breakpoint_reached():
-                return True
+            # escape_halt = self.cpu.halted and self.breakpoint_latch == 1
+            # TODO: Replace with GDB Stub
+            # if self.breakpoints_enabled and (not escape_halt) and self.breakpoint_reached():
+            #     return True
 
         # TODO: Move SDL2 sync to plugin
         self.sound.sync()

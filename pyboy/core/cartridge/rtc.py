@@ -24,7 +24,7 @@ class RTC:
 
         self.latch_enabled = False
 
-        self.timezero = time.time()
+        self.timezero = utils.get_time_ns()
 
         self.sec_latch = 0
         self.min_latch = 0
@@ -39,22 +39,24 @@ class RTC:
             self.save_state(IntIOWrapper(f))
 
     def save_state(self, f):
-        for b in struct.pack("f", self.timezero):
-            f.write(b)
+        f.write(self.timezero)
         f.write(self.halt)
         f.write(self.day_carry)
 
     def load_state(self, f, state_version):
-        self.timezero = struct.unpack("f", bytes([f.read() for _ in range(4)]))[0]
+        if utils.STATE_VERSION <= 9:
+            self.timezero = int(struct.unpack("f", bytes([f.read() for _ in range(4)]))[0])
+        else:
+            self.timezero = f.read()
         self.halt = f.read()
         self.day_carry = f.read()
 
     def latch_rtc(self):
-        t = time.time() - self.timezero
-        self.sec_latch = int(t % 60)
-        self.min_latch = int(t / 60 % 60)
-        self.hour_latch = int(t / 3600 % 24)
-        days = int(t / 3600 / 24)
+        t = utils.get_time_ns() - self.timezero
+        self.sec_latch = t % 60
+        self.min_latch = (t//60) % 60
+        self.hour_latch = (t//3600) % 24
+        days = (t//3600) // 24
         self.day_latch_low = days & 0xFF
         self.day_latch_high = days >> 8
 
@@ -98,16 +100,16 @@ class RTC:
         if not self.latch_enabled:
             logger.debug("RTC: Set register, but nothing is latched! 0x%0.4x, 0x%0.2x", register, value)
 
-        t = time.time() - self.timezero
+        t = utils.get_time_ns() - self.timezero
         if register == 0x08:
             # TODO: What happens, when these value are larger than allowed?
-            self.timezero -= int(t % 60) - value
+            self.timezero = self.timezero - (t%60) - value
         elif register == 0x09:
-            self.timezero -= int(t / 60 % 60) - value
+            self.timezero = self.timezero - (t//60%60) - value
         elif register == 0x0A:
-            self.timezero -= int(t / 3600 % 24) - value
+            self.timezero = self.timezero - (t//3600%24) - value
         elif register == 0x0B:
-            self.timezero -= int(t / 3600 / 24) - value
+            self.timezero = self.timezero - (t//3600//24) - value
         elif register == 0x0C:
             day_high = value & 0b1
             halt = (value & 0b1000000) >> 6
@@ -119,7 +121,7 @@ class RTC:
             else:
                 logger.warning("Stopping RTC is not implemented!")
 
-            self.timezero -= int(t / 3600 / 24) - (day_high << 8)
+            self.timezero = self.timezero - (t//3600//24) - (day_high << 8)
             self.day_carry = day_carry
         else:
             logger.warning("Invalid RTC register: %0.4x %0.2x", register, value)

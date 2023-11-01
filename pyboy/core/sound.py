@@ -12,10 +12,10 @@ from ctypes import c_void_p
 
 from pyboy import utils
 
-try:
-    import sdl2
-except ImportError:
-    sdl2 = None
+# try:
+#     import sdl2
+# except ImportError:
+sdl2 = None
 
 logger = utils.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class Sound:
             self.sampleclocks = CPU_FREQ // self.sample_rate
 
         self.audiobuffer = array("b", [0] * 4096) # Over 2 frames
-        self.audiobuffer_p = c_void_p(self.audiobuffer.buffer_info()[0])
+        # self.audiobuffer_p = c_void_p(self.audiobuffer.buffer_info()[0])
 
         self.clock = 0
 
@@ -174,14 +174,14 @@ class Sound:
                 self.audiobuffer[2 * i] = 0
                 self.audiobuffer[2*i + 1] = 0
 
-        if self.enabled:
-            # Clear queue, if we are behind
-            queued_time = sdl2.SDL_GetQueuedAudioSize(self.device)
-            samples_per_frame = (self.sample_rate / 60) * 2 # Data of 1 frame's worth (60) in stereo (2)
-            if queued_time > samples_per_frame * SOUND_DESYNC_THRESHOLD:
-                sdl2.SDL_ClearQueuedAudio(self.device)
+        # if self.enabled:
+        #     # Clear queue, if we are behind
+        #     queued_time = sdl2.SDL_GetQueuedAudioSize(self.device)
+        #     samples_per_frame = (self.sample_rate / 60) * 2 # Data of 1 frame's worth (60) in stereo (2)
+        #     if queued_time > samples_per_frame * SOUND_DESYNC_THRESHOLD:
+        #         sdl2.SDL_ClearQueuedAudio(self.device)
 
-            sdl2.SDL_QueueAudio(self.device, self.audiobuffer_p, 2 * nsamples)
+        #     sdl2.SDL_QueueAudio(self.device, self.audiobuffer_p, 2 * nsamples)
         self.clock %= self.sampleclocks
 
     def stop(self):

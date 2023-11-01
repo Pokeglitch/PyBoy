@@ -9,7 +9,7 @@ try:
 except ImportError:
     compiled = False
 
-STATE_VERSION = 9
+STATE_VERSION = 10
 
 # from pyboy import utils
 # import os

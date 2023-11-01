@@ -3,8 +3,9 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-from libc.stdint cimport uint8_t, uint16_t, uint64_t
+from libc.stdint cimport int64_t, uint8_t, uint16_t, uint64_t
 
+from pyboy cimport utils
 from pyboy.utils cimport IntIOInterface, Logger
 
 
@@ -13,7 +14,7 @@ cdef Logger logger
 cdef class RTC:
     cdef str filename
     cdef bint latch_enabled
-    cdef double timezero
+    cdef uint64_t timezero
     cdef uint64_t sec_latch
     cdef uint64_t min_latch
     cdef uint64_t hour_latch
@@ -25,7 +26,9 @@ cdef class RTC:
     cdef void stop(self) noexcept
     cdef void save_state(self, IntIOInterface) noexcept
     cdef void load_state(self, IntIOInterface, int) noexcept
-    cdef void latch_rtc(self) noexcept
-    cdef void writecommand(self, uint8_t) noexcept
-    cdef uint8_t getregister(self, uint8_t) noexcept
-    cdef void setregister(self, uint8_t, uint8_t) noexcept
+    @cython.locals(t=uint64_t, days=int64_t)
+    cdef void latch_rtc(self) noexcept nogil
+    cdef void writecommand(self, uint8_t) noexcept nogil
+    cdef uint8_t getregister(self, uint8_t) noexcept nogil
+    @cython.locals(t=uint64_t)
+    cdef void setregister(self, uint8_t, uint8_t) noexcept nogil
