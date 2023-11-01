@@ -30,6 +30,11 @@ cdef class Logger:
 
     # cdef void error3(self, *args) noexcept
 
+    cdef inline void critical(self, char[] fmt, ...) noexcept:
+        _log()
+        # printf(self.module)
+        # printf(x)
+
     cdef inline void error2(self, char[] fmt, ...) noexcept:
         # cdef char[128] _fmt = fmt.decode()
         # _log(_fmt)

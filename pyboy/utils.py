@@ -36,14 +36,16 @@ class Logger:
         self.log_level = 0
 
     def set_log_level(self, level):
-        if level == "ERROR":
+        if level == "DEBUG":
             self.log_level = 4
+        elif level == "INFO":
+            self.log_level = 3
+        elif level == "WARNING":
+            self.log_level = 2
         elif level == "ERROR":
-            self.log_level = 4
-        elif level == "ERROR":
-            self.log_level = 4
-        elif level == "ERROR":
-            self.log_level = 4
+            self.log_level = 1
+        elif level == "CRITICAL":
+            self.log_level = 0
         else:
             raise ValueError("Invalid log level")
 
@@ -54,6 +56,9 @@ class Logger:
 if not compiled:
     exec(
         """
+def critical(self, x, *args):
+    print(self.module + x)
+
 def error(self, x, *args):
     print(self.module + x)
 
@@ -67,6 +72,7 @@ def debug(self, x, *args):
     print(self.module + x)
 
 
+Logger.critical = critical
 Logger.error = error
 Logger.error2 = error
 Logger.warning = warning
