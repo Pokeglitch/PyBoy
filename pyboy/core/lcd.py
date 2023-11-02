@@ -680,16 +680,19 @@ class Renderer:
             self._spritecache1_state[tile] = 0
 
     def clear_tilecache0(self):
-        self._tilecache0_state[:] = 0
+        for i in range(TILES):
+            self._tilecache0_state[i] = 0
 
     def clear_tilecache1(self):
         pass
 
     def clear_spritecache0(self):
-        self._spritecache0_state[:] = 0
+        for i in range(TILES):
+            self._spritecache0_state[i] = 0
 
     def clear_spritecache1(self):
-        self._spritecache1_state[:] = 0
+        for i in range(TILES):
+            self._spritecache1_state[i] = 0
 
     def update_tilecache0(self, lcd, t, bank):
         if self._tilecache0_state[t]:
@@ -822,7 +825,8 @@ class CGBRenderer(Renderer):
         self.clear_spritecache1()
 
     def clear_tilecache1(self):
-        self._tilecache1_state[:] = 0
+        for i in range(TILES):
+            self._tilecache1_state[i] = 0
 
     def update_tilecache0(self, lcd, t, bank):
         if self._tilecache0_state[t]:
