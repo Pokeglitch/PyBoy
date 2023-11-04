@@ -21,28 +21,26 @@ class Motherboard:
         gamerom_file,
         bootrom_file,
         color_palette,
+        cgb_color_palette,
         disable_renderer,
         sound_enabled,
+        sound_emulated,
         cgb,
         randomize=False,
-        profiling=False,
     ):
         if bootrom_file is not None:
             logger.info("Boot-ROM file provided")
 
-        if profiling:
-            logger.info("Profiling enabled")
-
         self.cartridge = cartridge.load_cartridge(gamerom_file)
         if cgb is None:
             cgb = self.cartridge.cgb
-            logger.info(f'Cartridge type auto-detected to {"CGB" if cgb else "DMG"}')
+            logger.debug(f'Cartridge type auto-detected to {"CGB" if cgb else "DMG"}')
 
         self.timer = timer.Timer()
         self.interaction = interaction.Interaction()
         self.bootrom = bootrom.BootROM(bootrom_file, cgb)
         self.ram = ram.RAM(cgb, randomize=randomize)
-        self.cpu = cpu.CPU(self, profiling)
+        self.cpu = cpu.CPU(self)
 
         if cgb:
             self.lcd = lcd.CGBLCD(
@@ -50,6 +48,7 @@ class Motherboard:
                 self.cartridge.cgb,
                 disable_renderer,
                 color_palette,
+                cgb_color_palette,
                 randomize=randomize,
             )
         else:
@@ -58,9 +57,13 @@ class Motherboard:
                 self.cartridge.cgb,
                 disable_renderer,
                 color_palette,
+                cgb_color_palette,
                 randomize=randomize,
             )
-        self.sound = sound.Sound(sound_enabled)
+
+        # QUIRK: Force emulation of sound (muted)
+        sound_emulated |= self.cartridge.gamename == "ZELDA DIN"
+        self.sound = sound.Sound(sound_enabled, sound_emulated)
 
         self.key1 = 0
         self.double_speed = False
@@ -187,8 +190,13 @@ class Motherboard:
                 return True
         return False
 
+    def processing_frame(self):
+        b = (not self.lcd.frame_done)
+        self.lcd.frame_done = False # Clear vblank flag for next iteration
+        return b
+
     def tick(self):
-        while self.lcd.processing_frame():
+        while self.processing_frame():
             if self.cgb and self.hdma.transfer_active and self.lcd._STAT._mode & 0b11 == 0:
                 cycles = self.hdma.tick(self)
             else:
@@ -213,9 +221,6 @@ class Motherboard:
                     # self.serial.cycles_to_interrupt(),
                     mode0_cycles
                 )
-
-                # Profiling
-                self.cpu.add_opcode_hit(0x76, cycles // 4)
 
             #TODO: Support General Purpose DMA
             # https://gbdev.io/pandocs/CGB_Registers.html#bit-7--0---general-purpose-dma
@@ -333,16 +338,16 @@ class Motherboard:
             elif self.cgb and i == 0xFF6B:
                 return self.lcd.ocpd.get()
             elif self.cgb and i == 0xFF51:
-                logger.error("HDMA1 is not readable")
+                # logger.error("HDMA1 is not readable")
                 return 0x00 # Not readable
             elif self.cgb and i == 0xFF52:
-                logger.error("HDMA2 is not readable")
+                # logger.error("HDMA2 is not readable")
                 return 0x00 # Not readable
             elif self.cgb and i == 0xFF53:
-                logger.error("HDMA3 is not readable")
+                # logger.error("HDMA3 is not readable")
                 return 0x00 # Not readable
             elif self.cgb and i == 0xFF54:
-                logger.error("HDMA4 is not readable")
+                # logger.error("HDMA4 is not readable")
                 return 0x00 # Not readable
             elif self.cgb and i == 0xFF55:
                 return self.hdma.hdma5 & 0xFF
@@ -351,11 +356,11 @@ class Motherboard:
             return self.ram.internal_ram1[i - 0xFF80]
         elif i == 0xFFFF: # Interrupt Enable Register
             return self.cpu.interrupts_enabled_register
-        else:
-            raise IndexError("Memory access violation. Tried to read: %s" % hex(i))
+        # else:
+        #     raise IndexError("Memory access violation. Tried to read: %s" % hex(i))
 
     def setitem(self, i, value):
-        assert 0 <= value < 0x100, "Memory write error! Can't write %s to %s" % (hex(value), hex(i))
+        # assert 0 <= value < 0x100, "Memory write error! Can't write %s to %s" % (hex(value), hex(i))
 
         if 0x0000 <= i < 0x4000: # 16kB ROM bank #0
             # Doesn't change the data. This is for MBC commands
@@ -446,7 +451,7 @@ class Motherboard:
                 self.ram.io_ports[i - 0xFF00] = value
         elif 0xFF4C <= i < 0xFF80: # Empty but unusable for I/O
             if self.bootrom_enabled and i == 0xFF50 and (value == 0x1 or value == 0x11):
-                logger.info("Bootrom disabled!")
+                # logger.debug("Bootrom disabled!")
                 self.bootrom_enabled = False
             # CGB registers
             elif self.cgb and i == 0xFF4D:
@@ -483,8 +488,8 @@ class Motherboard:
             self.ram.internal_ram1[i - 0xFF80] = value
         elif i == 0xFFFF: # Interrupt Enable Register
             self.cpu.interrupts_enabled_register = value
-        else:
-            raise Exception("Memory access violation. Tried to write: %s" % hex(i))
+        # else:
+        #     raise Exception("Memory access violation. Tried to write: %s" % hex(i))
 
     def transfer_DMA(self, src):
         # http://problemkaputt.de/pandocs.htm#lcdoamdmatransfers
@@ -513,7 +518,6 @@ class HDMA:
         f.write(self.hdma3)
         f.write(self.hdma4)
         f.write(self.hdma5)
-        f.write(self._hdma5)
         f.write(self.transfer_active)
         f.write_16bit(self.curr_src)
         f.write_16bit(self.curr_dst)
@@ -524,7 +528,9 @@ class HDMA:
         self.hdma3 = f.read()
         self.hdma4 = f.read()
         self.hdma5 = f.read()
-        self._hdma5 = f.read()
+        if STATE_VERSION <= 8:
+            # NOTE: Deprecated read to self._hdma5
+            f.read()
         self.transfer_active = f.read()
         self.curr_src = f.read_16bit()
         self.curr_dst = f.read_16bit()
@@ -566,7 +572,6 @@ class HDMA:
                 # Hblank DMA transfer
                 # set 7th bit to 0
                 self.hdma5 = self.hdma5 & 0x7F
-                # self._hdma5 = (value & 0x7F)
                 self.transfer_active = True
                 self.curr_dst = dst
                 self.curr_src = src
@@ -596,7 +601,6 @@ class HDMA:
 
         if self.hdma5 == 0:
             self.transfer_active = False
-            # self.hdma5 = self._hdma5 | 0x80
             self.hdma5 = 0xFF
         else:
             self.hdma5 -= 1

@@ -23,25 +23,7 @@ class CPU:
         self.D = x >> 8
         self.E = x & 0x00FF
 
-    def f_c(self):
-        return (self.F & (1 << FLAGC)) != 0
-
-    def f_h(self):
-        return (self.F & (1 << FLAGH)) != 0
-
-    def f_n(self):
-        return (self.F & (1 << FLAGN)) != 0
-
-    def f_z(self):
-        return (self.F & (1 << FLAGZ)) != 0
-
-    def f_nc(self):
-        return (self.F & (1 << FLAGC)) == 0
-
-    def f_nz(self):
-        return (self.F & (1 << FLAGZ)) == 0
-
-    def __init__(self, mb, profiling=False):
+    def __init__(self, mb):
         self.A = 0
         self.F = 0
         self.B = 0
@@ -62,11 +44,6 @@ class CPU:
         self.halted = False
         self.stopped = False
         self.is_stuck = False
-
-        # Profiling
-        self.profiling = profiling
-        if profiling:
-            self.hitrate = array.array("L", [0] * 512)
 
     def save_state(self, f):
         for n in [self.A, self.F, self.B, self.C, self.D, self.E]:
@@ -100,20 +77,24 @@ class CPU:
         logger.debug("State loaded: " + self.dump_state(""))
 
     def dump_state(self, sym_label):
-        opcode = self.mb.getitem(self.mb.cpu.PC)
-        opcode_1 = self.mb.getitem(self.mb.cpu.PC + 1)
-        opcode_2 = self.mb.getitem(self.mb.cpu.PC + 2)
+        opcode_data = [
+            self.mb.getitem(self.mb.cpu.PC + n) for n in range(3)
+        ] # Max 3 length, then we don't need to backtrack
+
+        opcode = opcode_data[0]
+        opcode_length = opcodes.OPCODE_LENGTHS[opcode]
+        opcode_str = f"Opcode: [{opcodes.CPU_COMMANDS[opcode]}]"
         if opcode == 0xCB:
-            opcode_str = f"Opcode: {opcode:02X}, {opcodes.CPU_COMMANDS[opcode_1+0x100]}\n"
+            opcode_str += f" {opcodes.CPU_COMMANDS[opcode_data[1]+0x100]}"
         else:
-            opcode_str = f"Opcode: {opcode:02X} {opcode_1:02X}, {opcodes.CPU_COMMANDS[opcode]}\n"
+            opcode_str += " " + " ".join(f"{d:02X}" for d in opcode_data[1:opcode_length])
 
         return (
             "\n"
             f"A: {self.mb.cpu.A:02X}, F: {self.mb.cpu.F:02X}, B: {self.mb.cpu.B:02X}, "
             f"C: {self.mb.cpu.C:02X}, D: {self.mb.cpu.D:02X}, E: {self.mb.cpu.E:02X}, "
             f"HL: {self.mb.cpu.HL:04X}, SP: {self.mb.cpu.SP:04X}, PC: {self.mb.cpu.PC:04X} ({sym_label})\n"
-            f"{opcode_str}"
+            f"{opcode_str} "
             f"Interrupts - IME: {self.mb.cpu.interrupt_master_enable}, "
             f"IE: {self.mb.cpu.interrupts_enabled_register:08b}, "
             f"IF: {self.mb.cpu.interrupts_flag_register:08b}\n"
@@ -143,10 +124,11 @@ class CPU:
         elif self.halted:
             return 4 # TODO: Number of cycles for a HALT in effect?
 
-        old_pc = self.PC
+        old_pc = self.PC # If the PC doesn't change, we're likely stuck
+        old_sp = self.SP # Sometimes a RET can go to the same PC, so we check the SP too.
         cycles = self.fetch_and_execute()
-        if not self.halted and old_pc == self.PC and not self.is_stuck:
-            logger.error("CPU is stuck: " + self.dump_state(""))
+        if not self.halted and old_pc == self.PC and old_sp == self.SP and not self.is_stuck:
+            # logger.error("CPU is stuck: " + self.dump_state(""))
             self.is_stuck = True
         self.interrupt_queued = False
         return cycles
@@ -168,7 +150,7 @@ class CPU:
             elif self.handle_interrupt(INTR_HIGHTOLOW, 0x0060):
                 self.interrupt_queued = True
             else:
-                logger.error("No interrupt triggered, but it should!")
+                # logger.error("No interrupt triggered, but it should!")
                 self.interrupt_queued = False
             return True
         else:
@@ -196,17 +178,10 @@ class CPU:
             return True
         return False
 
-    def add_opcode_hit(self, opcode, count):
-        # Profiling
-        if self.profiling:
-            self.hitrate[opcode] += 1
-
     def fetch_and_execute(self):
         opcode = self.mb.getitem(self.PC)
         if opcode == 0xCB: # Extension code
             opcode = self.mb.getitem(self.PC + 1)
             opcode += 0x100 # Internally shifting look-up table
-
-        self.add_opcode_hit(opcode, 1)
 
         return opcodes.execute_opcode(self, opcode)

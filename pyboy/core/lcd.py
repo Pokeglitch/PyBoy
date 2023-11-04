@@ -29,7 +29,7 @@ except ImportError:
 
 
 class LCD:
-    def __init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, randomize=False):
+    def __init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, cgb_color_palette, randomize=False):
         self.VRAM0 = array("B", [0] * VIDEO_RAM)
         self.OAM = array("B", [0] * OBJECT_ATTRIBUTE_MEMORY)
         self.disable_renderer = disable_renderer
@@ -61,20 +61,18 @@ class LCD:
 
         if self.cgb:
             if cartridge_cgb:
-                logger.info("Starting CGB renderer")
+                logger.debug("Starting CGB renderer")
                 self.renderer = CGBRenderer()
             else:
-                logger.info("Starting CGB renderer in DMG-mode")
+                logger.debug("Starting CGB renderer in DMG-mode")
                 # Running DMG ROM on CGB hardware use the default palettes
-                bg_pal = (0xFFFFFF, 0x7BFF31, 0x0063C5, 0x000000)
-                obj0_pal = (0xFFFFFF, 0xFF8484, 0xFF8484, 0x000000)
-                obj1_pal = (0xFFFFFF, 0xFF8484, 0xFF8484, 0x000000)
+                bg_pal, obj0_pal, obj1_pal = cgb_color_palette
                 self.BGP.palette_mem_rgb = [(c << 8) for c in bg_pal]
                 self.OBP0.palette_mem_rgb = [(c << 8) for c in obj0_pal]
                 self.OBP1.palette_mem_rgb = [(c << 8) for c in obj1_pal]
                 self.renderer = Renderer(False)
         else:
-            logger.info("Starting DMG renderer")
+            logger.debug("Starting DMG renderer")
             self.BGP.palette_mem_rgb = [(c << 8) for c in color_palette]
             self.OBP0.palette_mem_rgb = [(c << 8) for c in color_palette]
             self.OBP1.palette_mem_rgb = [(c << 8) for c in color_palette]
@@ -133,12 +131,6 @@ class LCD:
         else:
             # logger.error(f"Unsupported STAT mode: {mode}")
             return 0
-
-    def processing_frame(self):
-        b = (not self.frame_done)
-        if not b:
-            self.frame_done = False # Clear vblank flag for next iteration
-        return b
 
     def tick(self, cycles):
         interrupt_flag = 0
@@ -394,6 +386,7 @@ class Renderer:
         self._tilecache0_raw = array("B", [0x00] * (TILES*8*8*4))
         self._spritecache0_raw = array("B", [0x00] * (TILES*8*8*4))
         self._spritecache1_raw = array("B", [0x00] * (TILES*8*8*4))
+        self.sprites_to_render = array("i", [0] * 10)
 
         self.clear_cache()
 
@@ -541,31 +534,41 @@ class Renderer:
             # Reset at the end of a frame. We set it to -1, so it will be 0 after the first increment
             self.ly_window = -1
 
-    def key_priority(self, x):
-        # NOTE: Cython is being insufferable, and demands a non-lambda function
-        return (self.sprites_to_render_x[x], self.sprites_to_render_n[x])
+    def sort_sprites(self, sprite_count):
+        # Use insertion sort, as it has O(n) on already sorted arrays. This
+        # functions is likely called multiple times with unchanged data.
+        # Sort descending because of the sprite priority.
+
+        for i in range(1, sprite_count):
+            key = self.sprites_to_render[i] # The current element to be inserted into the sorted portion
+            j = i - 1 # Index of the last element in the sorted portion of the array
+
+            # Move elements of the sorted portion greater than the key to the right
+            while j >= 0 and key > self.sprites_to_render[j]:
+                self.sprites_to_render[j + 1] = self.sprites_to_render[j]
+                j -= 1
+
+            # Insert the key into its correct position in the sorted portion
+            self.sprites_to_render[j + 1] = key
 
     def scanline_sprites(self, lcd, ly, buffer, ignore_priority):
         if not lcd._LCDC.sprite_enable or lcd.disable_renderer:
             return
 
-        spriteheight = 16 if lcd._LCDC.sprite_height else 8
-
-        sprite_count = 0
-        self.sprites_to_render_n = array("i", [0] * 10)
-        self.sprites_to_render_x = array("i", [0] * 10)
-
         # Find the first 10 sprites in OAM that appears on this scanline.
         # The lowest X-coordinate has priority, when overlapping
-
-        # Loop through OAM, find 10 first sprites for scanline. Order based on X-coordinate high-to-low. Render them.
+        spriteheight = 16 if lcd._LCDC.sprite_height else 8
+        sprite_count = 0
         for n in range(0x00, 0xA0, 4):
             y = lcd.OAM[n] - 16 # Documentation states the y coordinate needs to be subtracted by 16
             x = lcd.OAM[n + 1] - 8 # Documentation states the x coordinate needs to be subtracted by 8
 
             if y <= ly < y + spriteheight:
-                self.sprites_to_render_n[sprite_count] = n
-                self.sprites_to_render_x[sprite_count] = x # Used for sorting for priority
+                # x is used for sorting for priority
+                if self.cgb:
+                    self.sprites_to_render[sprite_count] = n << 16 | x
+                else:
+                    self.sprites_to_render[sprite_count] = x << 16 | n
                 sprite_count += 1
 
             if sprite_count == 10:
@@ -576,10 +579,14 @@ class Renderer:
         # Z-fighting.) In CGB mode, the first sprite in OAM ($FE00-$FE03) has the highest priority, and so on. In
         # Non-CGB mode, the smaller the X coordinate, the higher the priority. The tie breaker (same X coordinates) is
         # the same priority as in CGB mode.
-        sprites_priority = sorted(range(sprite_count), key=self.key_priority)
+        self.sort_sprites(sprite_count)
 
-        for _n in sprites_priority[::-1]:
-            n = self.sprites_to_render_n[_n]
+        for _n in self.sprites_to_render[:sprite_count]:
+            if self.cgb:
+                n = _n >> 16
+            else:
+                n = _n & 0xFF
+            # n = self.sprites_to_render_n[_n]
             y = lcd.OAM[n] - 16 # Documentation states the y coordinate needs to be subtracted by 16
             x = lcd.OAM[n + 1] - 8 # Documentation states the x coordinate needs to be subtracted by 8
             tileindex = lcd.OAM[n + 2]
@@ -779,8 +786,8 @@ class Renderer:
 
 
 class CGBLCD(LCD):
-    def __init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, randomize=False):
-        LCD.__init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, randomize=False)
+    def __init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, cgb_color_palette, randomize=False):
+        LCD.__init__(self, cgb, cartridge_cgb, disable_renderer, color_palette, cgb_color_palette, randomize=False)
         self.VRAM1 = array("B", [0] * VIDEO_RAM)
 
         self.vbk = VBKregister()
@@ -804,10 +811,6 @@ class CGBRenderer(Renderer):
             self._tilecache1 = [v[i:i + 8] for i in range(0, TILES * 8 * 8, 8)]
 
         self.clear_cache()
-
-    def key_priority(self, x):
-        # Define sprite sorting for CGB
-        return (self.sprites_to_render_n[x], self.sprites_to_render_x[x])
 
     def clear_cache(self):
         self.clear_tilecache0()
