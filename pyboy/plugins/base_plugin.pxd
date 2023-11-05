@@ -15,29 +15,27 @@ cdef int ROWS, COLS
 
 
 cdef class PyBoyPlugin:
-    cdef object pyboy
-    cdef Motherboard mb
-    cdef bint cgb
-    cdef dict pyboy_argv
-    @cython.locals(event=WindowEvent)
-    cdef list handle_events(self, list) noexcept
-    cdef void post_tick(self) noexcept
-    cdef str window_title(self) noexcept
-    cdef void stop(self) noexcept
-    cpdef bint enabled(self) noexcept
-
-    # cpdef bint enabled(cls, object, dict)
+    cdef public object pyboy
+    cdef public Motherboard mb
+    cdef public bint cgb
+    cdef public dict pyboy_argv
+    #@cython.locals(event=WindowEvent)
+    cpdef list handle_events(self, list) noexcept
+    cpdef void post_tick(self) noexcept
+    cpdef str window_title(self) noexcept
+    cpdef void stop(self) noexcept
+    
+    #cpdef bint enabled(cls, object, dict)
 
 
 cdef class PyBoyWindowPlugin(PyBoyPlugin):
-
     cdef int scale
     cdef tuple _scaledresolution
     cdef bint enable_title
     cdef Renderer renderer
 
-    cdef bint frame_limiter(self, int) noexcept
-    cdef void set_title(self, str) noexcept
+    cpdef bint frame_limiter(self, int) noexcept
+    cpdef void set_title(self, str) noexcept
 
 
 cdef class PyBoyGameWrapper(PyBoyPlugin):

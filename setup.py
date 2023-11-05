@@ -79,25 +79,6 @@ def prep_pxd_py_files():
 
 
 setup(
-    name="pyboy",
-    version="v1.5.1",
-    packages=find_packages(),
-    author="Mads Ynddal",
-    author_email="mads@ynddal.dk",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/Baekalfen/PyBoy",
-    classifiers=[
-        "License :: Free for non-commercial use",
-        "Operating System :: OS Independent",
-        "Programming Language :: Cython",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Topic :: System :: Emulators",
-    ],
-    entry_points={
-        "console_scripts": ["pyboy = pyboy.__main__:main", ],
-    },
     cmdclass={
         "build_ext": build_ext,
     },

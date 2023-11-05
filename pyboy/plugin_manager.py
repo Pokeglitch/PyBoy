@@ -74,6 +74,11 @@ def external_plugin_names():
 
 
 class PluginManager:
+    @staticmethod
+    def add_gamewrapper(_mod_class):
+        external_plugins.append(_mod_class)
+        registered_gamewrappers.append(_mod_class)
+
     def __init__(self, pyboy, mb, pyboy_argv):
         self.pyboy = pyboy
 
@@ -82,6 +87,7 @@ class PluginManager:
         else:
             logger.info("No external plugins found")
 
+        
         self.enabled_plugins = [p(pyboy, mb, pyboy_argv) for p in registered_plugins if p.enabled(pyboy, pyboy_argv)]
         self.enabled_window_plugins = [
             p(pyboy, mb, pyboy_argv) for p in registered_window_plugins if p.enabled(pyboy, pyboy_argv)
