@@ -81,6 +81,26 @@ class Motherboard:
         self.breakpoints_list = [] #[(0, 0x150), (0, 0x0040), (0, 0x0048), (0, 0x0050)]
         self.breakpoint_latch = 0
 
+        self.onCycle = []
+
+    def addOnCycle(self, fn):
+        self.onCycle.append(fn)
+
+    def execOnCycle(self):
+        pc = self.cpu.PC
+        if pc < 0x4000 and not self.bootrom_enabled:
+            bank = 0
+        elif 0x4000 <= pc < 0x8000:
+            bank = self.cartridge.rombank_selected
+        elif 0xA000 <= pc < 0xC000:
+            bank = self.cartridge.rambank_selected
+        elif (0xC000 <= pc <= 0xFFFF) or (pc < 0x100 and self.bootrom_enabled):
+            bank = -1
+        else:
+            bank = None
+
+        [fn( (bank, pc) ) for fn in self.onCycle]
+
     def switch_speed(self):
         bit0 = self.key1 & 0b1
         if bit0 == 1:
@@ -241,8 +261,9 @@ class Motherboard:
             # Escape halt. This happens when pressing 'return' in the debugger. It will make us skip breaking on halt
             # for every cycle, but do break on the next instruction -- even in an interrupt.
             escape_halt = self.cpu.halted and self.breakpoint_latch == 1
-            if self.breakpoints_enabled and (not escape_halt) and self.breakpoint_reached():
-                return True
+            
+            if not escape_halt and self.onCycle:
+                self.execOnCycle()
 
         # TODO: Move SDL2 sync to plugin
         self.sound.sync()

@@ -27,13 +27,13 @@ cdef int STATE_VERSION
 cdef class Motherboard:
     cdef pyboy.core.interaction.Interaction interaction
     cdef pyboy.core.bootrom.BootROM bootrom
-    cdef pyboy.core.ram.RAM ram
+    cdef public pyboy.core.ram.RAM ram
     cdef pyboy.core.lcd.LCD lcd
-    cdef pyboy.core.cpu.CPU cpu
+    cdef public pyboy.core.cpu.CPU cpu
     cdef pyboy.core.timer.Timer timer
     cdef pyboy.core.sound.Sound sound
-    cdef pyboy.core.cartridge.base_mbc.BaseMBC cartridge
-    cdef bint bootrom_enabled
+    cdef public pyboy.core.cartridge.base_mbc.BaseMBC cartridge
+    cdef public bint bootrom_enabled
     cdef str serialbuffer
 
     # CGB
@@ -45,6 +45,7 @@ cdef class Motherboard:
     cdef bint breakpoints_enabled
     cdef list breakpoints_list
     cdef int breakpoint_latch
+    cdef list onCycle
 
     cdef inline bint processing_frame(self) noexcept
 

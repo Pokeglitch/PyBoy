@@ -38,11 +38,11 @@ cdef class CPU:
 
     # Only char (8-bit) needed, but I'm not sure all intermittent
     # results do not overflow
-    cdef int16_t A, F, B, C, D, E
+    cdef public int16_t A, F, B, C, D, E
 
     # Only short (16-bit) needed, but I'm not sure all intermittent
     # results do not overflow
-    cdef int HL, SP, PC
+    cdef public int HL, SP, PC
 
     cdef pyboy.core.mb.Motherboard mb
 
